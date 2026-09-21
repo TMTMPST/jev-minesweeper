@@ -28,12 +28,21 @@ export async function main(): Promise<void> {
   const page = await browser.newPage();
   try {
     await page.goto(url);
-    console.log('Open one local cell in the browser, then press Enter here for one proven controller action.');
+    console.log('Open one local cell in the browser, then press Enter here to start the safe controller loop.');
     await new Promise<void>((resolve) => process.stdin.once('data', resolve));
     const controller = createLocalController(page);
-    const result = await controller.step();
-    console.log(JSON.stringify(result.action));
-    if (result.action.kind === 'STOP' && result.action.reason === 'DECISION_FAILURE') console.error(`Decision failure: ${controller.lastFailureDetail ?? 'unknown decision error'}`);
+    let actions = 0;
+    for (;;) {
+      const result = await controller.step();
+      if (result.action.kind === 'STOP') {
+        console.log(JSON.stringify(result.action));
+        if (result.action.reason === 'DECISION_FAILURE') console.error(`Decision failure: ${controller.lastFailureDetail ?? 'unknown decision error'}`);
+        break;
+      }
+      actions += 1;
+      console.log(`Action ${actions}: ${JSON.stringify(result.action)}`);
+      await page.waitForTimeout(100);
+    }
   } finally {
     await browser.close();
     await server?.close();
