@@ -8,9 +8,10 @@ export class HttpJevDecisionClient implements DecisionClient {
 
   async choose(board: VisibleBoard, candidates: readonly Candidate[]): Promise<DecisionResult> {
     const options = candidates.map(encodeOption);
+    const criteria = Object.fromEntries(candidates.map((candidate) => [encodeOption(candidate), candidate.proof]));
     let response: Response;
     try {
-      response = await fetch(this.url!, { method: 'POST', signal: AbortSignal.timeout(10_000), headers: { Authorization: `Bearer ${this.key!}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ state: normaliseBoard(board), questions: { next_move: { type: 'choice', options } } }) });
+      response = await fetch(this.url!, { method: 'POST', signal: AbortSignal.timeout(10_000), headers: { Authorization: `Bearer ${this.key!}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ state: normaliseBoard(board), model: 'jev-latest', questions: { next_move: { type: 'choice', instructions: 'Select exactly one candidate move. Every listed move is already proven safe or proven mine by deterministic constraint inference.', criteria } } }) });
     } catch {
       throw new Error('Jev request failed');
     }
