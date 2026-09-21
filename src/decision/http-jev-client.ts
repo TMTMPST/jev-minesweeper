@@ -16,8 +16,15 @@ export class HttpJevDecisionClient implements DecisionClient {
     }
     if (!response.ok) throw new Error(`Jev request failed: ${response.status}`);
     const body: unknown = await response.json().catch(() => { throw new Error('invalid Jev response'); });
-    if (!body || typeof body !== 'object' || !('next_move' in body)) throw new Error('invalid Jev response');
-    const answer = body.next_move;
+    if (!body || typeof body !== 'object') throw new Error('invalid Jev response');
+    let answer: unknown;
+    if ('next_move' in body) {
+      answer = body.next_move;
+    } else if ('answers' in body && body.answers && typeof body.answers === 'object' && 'next_move' in body.answers) {
+      answer = body.answers.next_move;
+    } else {
+      throw new Error('invalid Jev response');
+    }
     if (!answer || typeof answer !== 'object' || !('choice' in answer) || !('confidence' in answer)) throw new Error('invalid Jev response');
     const option = answer.choice;
     const confidence = answer.confidence;
