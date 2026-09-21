@@ -1,0 +1,31 @@
+{
+  "name": "jev-minesweeper",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run tests/unit",
+    "test:e2e": "playwright test",
+    "demo": "vite --host 127.0.0.1",
+    "agent:local": "tsx src/cli/play-local.ts",
+    "agent:live:casual": "tsx src/cli/play-live-casual.ts --ack-live-casual"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "@types/node": "^24.10.0",
+    "jsdom": "^29.1.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.2",
+    "vitest": "^4.0.8"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.1"
+  }
+}
