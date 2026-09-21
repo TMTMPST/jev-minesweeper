@@ -20,10 +20,18 @@ test('auto-initialization reveals a board-wide zero region', async ({ page }) =>
   expect(await page.locator('.opened').count()).toBeGreaterThan(1);
 });
 
-test('restart creates another auto-initialized local board', async ({ page }) => {
+test('restart generates a different seed and applies board settings', async ({ page }) => {
   await page.goto('/?seed=7&width=6&height=6&mines=6');
+  const firstSeed = await page.locator('#CellsBlock').getAttribute('data-seed');
   await page.locator('#restart-game').click();
   await expect(page.locator('#run-id')).toHaveText('RUN 2');
   await expect(page.locator('#app')).toHaveAttribute('data-run', '2');
-  expect(await page.locator('.opened').count()).toBeGreaterThan(0);
+  expect(await page.locator('#CellsBlock').getAttribute('data-seed')).not.toBe(firstSeed);
+  await page.locator('#board-width').fill('8');
+  await page.locator('#board-height').fill('5');
+  await page.locator('#board-mines').fill('9');
+  await page.locator('#apply-settings').click();
+  await expect(page.locator('#run-id')).toHaveText('RUN 3');
+  await expect(page.locator('#dimension-count')).toHaveText('8 × 5');
+  expect(await page.locator('#CellsBlock .cell').count()).toBe(40);
 });

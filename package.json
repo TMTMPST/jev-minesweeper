@@ -13,6 +13,8 @@
     "test": "vitest run tests/unit",
     "test:e2e": "playwright test",
     "demo": "vite --host 127.0.0.1",
+    "host": "vite --host 0.0.0.0",
+    "preview": "vite preview --host 0.0.0.0",
     "agent:local": "tsx src/cli/play-local.ts",
     "agent:live:casual": "tsx src/cli/play-live-casual.ts --ack-live-casual"
   },

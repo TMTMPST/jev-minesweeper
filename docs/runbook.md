@@ -5,13 +5,28 @@
 ```bash
 npm install
 npx playwright install chromium
-npm run demo
+npm run agent:local
 ```
 
-Open the displayed local URL and make the first move manually. The demo is local only. To let the controller make one proven move in a fresh browser after you have started the local server:
+`agent:local` starts the local browser demo and controller together. The board opens with a random safe local opening; no terminal input is needed. When the controller stops, use **RESTART BOARD** or **APPLY NEW RANDOM BOARD** in the browser. Board width, height, mine count, and cell size are configurable in the UI.
+
+For UI-only development:
 
 ```bash
-npm run agent:local
+npm run dev
+```
+
+For another device on the same network:
+
+```bash
+npm run host
+```
+
+For a production-like local preview:
+
+```bash
+npm run build
+npm run preview
 ```
 
 Run browser verification with `npm run test:e2e`.

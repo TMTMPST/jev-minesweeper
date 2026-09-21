@@ -1,5 +1,5 @@
 import { createGame, openCell } from '../domain/engine';
-import { bindLocalBoard } from './board-view';
+import { bindLocalBoard, type BoardSettings } from './board-view';
 import './styles.css';
 
 type ControllerEvent = Readonly<{ kind: 'decision' | 'stop'; action?: string; proof?: string; confidence?: number; verified?: boolean; source?: string; reason?: string }>;
@@ -11,16 +11,17 @@ const integer = (name: string, fallback: number) => {
 };
 const root = document.querySelector<HTMLElement>('#app');
 if (!root) throw new Error('missing application root');
-const width = integer('width', 12);
-const height = integer('height', 12);
-const mines = integer('mines', 22);
-let seed = integer('seed', 7);
-const nextGame = () => {
-  const game = createGame({ width, height, mines, seed });
-  seed += 1;
-  return openCell(game, 0, 0);
+const settings: BoardSettings = { width: integer('width', 12), height: integer('height', 12), mines: integer('mines', 22), cellSize: integer('cellSize', 40) };
+const configuredSeed = params.has('seed') ? integer('seed', 1) : undefined;
+const randomSeed = () => crypto.getRandomValues(new Uint32Array(1))[0]!;
+let firstSeed = configuredSeed;
+const createRandomGame = (nextSettings: BoardSettings) => {
+  const seed = firstSeed ?? randomSeed();
+  firstSeed = undefined;
+  const mines = Math.min(nextSettings.mines, nextSettings.width * nextSettings.height - 1);
+  return openCell(createGame({ width: nextSettings.width, height: nextSettings.height, mines, seed }), 0, 0);
 };
-bindLocalBoard(root, nextGame(), nextGame);
+bindLocalBoard(root, createRandomGame(settings), settings, createRandomGame);
 
 const telemetryUrl = params.get('telemetry');
 let shownEvents = 0;
