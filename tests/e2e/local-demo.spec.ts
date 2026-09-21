@@ -24,5 +24,6 @@ test('restart creates another auto-initialized local board', async ({ page }) =>
   await page.goto('/?seed=7&width=6&height=6&mines=6');
   await page.locator('#restart-game').click();
   await expect(page.locator('#run-id')).toHaveText('RUN 2');
+  await expect(page.locator('#app')).toHaveAttribute('data-run', '2');
   expect(await page.locator('.opened').count()).toBeGreaterThan(0);
 });

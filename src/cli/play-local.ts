@@ -31,7 +31,8 @@ export async function main(): Promise<void> {
     await page.goto(pageUrl.href);
     console.log('Local controller is running. Use RESTART BOARD in the browser after a stop condition.');
     const controller = createLocalController(page);
-    let run = await page.locator('#run-id').textContent();
+    let run = await page.locator('#app').getAttribute('data-run');
+    if (!run) throw new Error('local board did not expose a run identifier');
     for (;;) {
       const result = await controller.step();
       if (result.action.kind !== 'STOP') {
@@ -44,8 +45,8 @@ export async function main(): Promise<void> {
       if (result.action.reason === 'DECISION_FAILURE') console.error(`Decision failure: ${controller.lastFailureDetail ?? 'unknown decision error'}`);
       for (;;) {
         await page.waitForTimeout(250);
-        const nextRun = await page.locator('#run-id').textContent();
-        if (nextRun !== run) { run = nextRun; break; }
+        const nextRun = await page.locator('#app').getAttribute('data-run');
+        if (nextRun && nextRun !== run) { run = nextRun; break; }
       }
     }
   } finally {

@@ -45,6 +45,7 @@ export function bindLocalBoard(root: HTMLElement, initialGame: LocalGame, nextGa
     view.flagged.textContent = String(board.cells.filter((cell) => cell.state === 'flag').length);
     view.dimensions.textContent = `${board.width} × ${board.height}`;
     view.run.textContent = `RUN ${run}`;
+    root.dataset.run = String(run);
   };
   root.addEventListener('contextmenu', (event) => event.preventDefault());
   root.addEventListener('click', (event) => {
