@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { chromium } from '@playwright/test';
+import { launchControllerBrowser } from './browser-launch';
 import { LiveCasualAdapter } from '../browser/live-casual-adapter';
 
 export async function parseLiveArgs(args: readonly string[]): Promise<void> {
@@ -9,8 +9,8 @@ export async function parseLiveArgs(args: readonly string[]): Promise<void> {
 
 export async function main(): Promise<void> {
   await parseLiveArgs(process.argv.slice(2));
-  const browser = await chromium.launch({ headless: false });
-  const context = await browser.newContext();
+  const browser = await launchControllerBrowser();
+  const context = await browser.newContext({ viewport: null });
   const page = await context.newPage();
   await page.goto('https://minesweeper.online/');
   console.log(`Current URL: ${page.url()}. Manually start an unranked casual board; this tool will not click a non-cell element.`);

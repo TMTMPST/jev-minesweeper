@@ -9,4 +9,16 @@ describe('constraint solver', () => {
   it('flags every adjacent closed cell when they exactly fill a number remainder', () => expect(inferCandidates(boardFromRows([['?', '1']]))).toContainEqual({ action: { kind: 'FLAG', x: 0, y: 0 }, proof: 'number 1 at 1,0 has 1 remaining mine across 1 closed neighbor' }));
   it('never guesses ambiguous frontiers', () => expect(inferCandidates(boardFromRows([['?', '1', '?']]))).toEqual([]));
   it('rejects contradictory flags', () => expect(() => inferCandidates(boardFromRows([['F', '0']]))).toThrow('invalid visible board'));
+  it('opens cells introduced by a superset constraint with the same mine remainder', () => {
+    const candidates = inferCandidates(boardFromRows([['F', '?', '?', '?'], ['F', '5', '2', '?'], ['F', '?', '?', '?']]));
+    expect(candidates).toContainEqual(expect.objectContaining({ action: { kind: 'OPEN', x: 3, y: 0 } }));
+    expect(candidates).toContainEqual(expect.objectContaining({ action: { kind: 'OPEN', x: 3, y: 1 } }));
+    expect(candidates).toContainEqual(expect.objectContaining({ action: { kind: 'OPEN', x: 3, y: 2 } }));
+  });
+  it('flags cells introduced by a superset constraint when they account for every additional mine', () => {
+    const candidates = inferCandidates(boardFromRows([['F', '?', '?', '?'], ['F', '4', '4', '?'], ['F', '?', '?', '?']]));
+    expect(candidates).toContainEqual(expect.objectContaining({ action: { kind: 'FLAG', x: 3, y: 0 } }));
+    expect(candidates).toContainEqual(expect.objectContaining({ action: { kind: 'FLAG', x: 3, y:1 } }));
+    expect(candidates).toContainEqual(expect.objectContaining({ action: { kind: 'FLAG', x: 3, y: 2 } }));
+  });
 });

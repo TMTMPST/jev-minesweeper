@@ -39,3 +39,23 @@ test('restart generates a different seed and applies board settings', async ({ p
   expect(await page.locator('#CellsBlock .cell').count()).toBe(40);
   expect(await page.locator('.opened').count()).toBe(0);
 });
+
+test('renders the complete expert board and records manual board revisions', async ({ page }) => {
+  await page.goto('/?seed=7');
+  await page.locator('[data-preset="expert"]').click();
+  await expect(page.locator('#dimension-count')).toHaveText('30 × 16');
+  await expect(page.locator('#CellsBlock .cell')).toHaveCount(480);
+  const initialRevision = await page.locator('#app').getAttribute('data-board-revision');
+  await page.locator('#start-agent').click();
+  const afterStartRevision = await page.locator('#app').getAttribute('data-board-revision');
+  expect(afterStartRevision).not.toBe(initialRevision);
+  await page.locator('#CellsBlock .closed').first().click({ button: 'right' });
+  await expect(page.locator('#app')).not.toHaveAttribute('data-board-revision', afterStartRevision ?? '');
+});
+
+test('fills the available desktop viewport instead of leaving a blank side gutter', async ({ page }) => {
+  await page.setViewportSize({ width: 1568, height: 793 });
+  await page.goto('/');
+  const metrics = await page.locator('.app-shell').evaluate((element) => ({ shellWidth: element.getBoundingClientRect().width, viewportWidth: window.innerWidth }));
+  expect(metrics.shellWidth).toBeGreaterThan(metrics.viewportWidth - 60);
+});

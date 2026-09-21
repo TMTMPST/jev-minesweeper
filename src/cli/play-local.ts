@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { chromium } from '@playwright/test';
+import { launchControllerBrowser } from './browser-launch';
 import { createServer, type ViteDevServer } from 'vite';
 import { createLocalController } from './local-controller';
 import { startTelemetryServer } from './telemetry-server';
@@ -25,16 +25,16 @@ export async function main(): Promise<void> {
   const telemetry = await startTelemetryServer();
   const pageUrl = new URL(url);
   pageUrl.searchParams.set('telemetry', telemetry.url);
-  const browser = await chromium.launch({ headless: false });
-  const page = await browser.newPage();
+  const browser = await launchControllerBrowser();
+  const page = await browser.newPage({ viewport: null });
   try {
     await page.goto(pageUrl.href);
     console.log('Local controller is running. Choose a board and click START JEV in the browser.');
     const controller = createLocalController(page);
-    let run = await page.locator('#app').getAttribute('data-run');
-    if (!run) throw new Error('local board did not expose a run identifier');
     for (;;) {
+      if (page.isClosed() || !browser.isConnected()) return;
       const result = await controller.step();
+      if (page.isClosed() || !browser.isConnected()) return;
       if (result.action.kind !== 'STOP') {
         const candidate = controller.lastSelectedCandidate;
         const probabilityByOption = Object.fromEntries((result.probabilities ?? []).map((item) => [item.option, item.probability]));
@@ -48,10 +48,12 @@ export async function main(): Promise<void> {
       telemetry.publish({ kind: 'stop', reason: result.action.reason });
       console.log(JSON.stringify(result.action));
       if (result.action.reason === 'DECISION_FAILURE') console.error(`Decision failure: ${controller.lastFailureDetail ?? 'unknown decision error'}`);
+      const stoppedRevision = await page.locator('#app').getAttribute('data-board-revision');
       for (;;) {
+        if (page.isClosed() || !browser.isConnected()) return;
         await page.waitForTimeout(250);
-        const nextRun = await page.locator('#app').getAttribute('data-run');
-        if (nextRun && nextRun !== run) { run = nextRun; break; }
+        const nextRevision = await page.locator('#app').getAttribute('data-board-revision');
+        if (nextRevision && nextRevision !== stoppedRevision) break;
       }
     }
   } finally {

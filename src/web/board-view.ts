@@ -3,7 +3,7 @@ import type { VisibleBoard } from '../domain/types';
 
 export type BoardSettings = Readonly<{ width: number; height: number; mines: number; cellSize: number }>;
 
-type Dashboard = Readonly<{ board: HTMLElement; status: HTMLElement; opened: HTMLElement; flagged: HTMLElement; dimensions: HTMLElement; event: HTMLElement; run: HTMLElement; width: HTMLInputElement; height: HTMLInputElement; mines: HTMLInputElement; scale: HTMLInputElement; scaleValue: HTMLOutputElement }>;
+type Dashboard = Readonly<{ board: HTMLElement; status: HTMLElement; opened: HTMLElement; flagged: HTMLElement; dimensions: HTMLElement; event: HTMLElement; run: HTMLElement; fullscreen: HTMLButtonElement; width: HTMLInputElement; height: HTMLInputElement; mines: HTMLInputElement; scale: HTMLInputElement; scaleValue: HTMLOutputElement }>;
 
 export function renderBoard(root: HTMLElement, board: VisibleBoard, status: LocalGame['status']): void {
   const block = document.createElement('div');
@@ -25,7 +25,7 @@ export function renderBoard(root: HTMLElement, board: VisibleBoard, status: Loca
 }
 
 function dashboard(root: HTMLElement, settings: BoardSettings): Dashboard {
-  root.innerHTML = `<section class="app-shell"><header class="topbar"><a class="brand" href="/"><span>JEV</span> MINESWEEPER</a><div class="topbar-status"><span class="status-dot"></span><span id="game-status">READY</span></div><div class="topbar-actions"><button id="fullscreen-game" class="button ghost" type="button">Fullscreen</button><button id="restart-game" class="button ghost" type="button">New board</button><button id="start-agent" class="button primary" type="button">Start Jev</button></div></header><main class="workspace"><section class="game-column"><div class="game-card"><div class="card-head"><div><span class="kicker">LOCAL GAME</span><h1>Clear the field.</h1></div><span id="run-id" class="run-badge">RUN 1</span></div><div id="board-stage"></div><footer class="board-footer"><span>Left click to open · Right click to flag</span><span id="last-event">New random board ready.</span></footer></div></section><aside class="inspector"><section class="panel setup-panel"><div class="panel-title"><span>New game</span><small>Random every time</small></div><div class="difficulty-grid"><button data-preset="easy" type="button">Easy<small>9 × 9 · 10</small></button><button data-preset="medium" type="button">Medium<small>12 × 12 · 25</small></button><button data-preset="intermediate" type="button">Intermediate<small>16 × 16 · 40</small></button><button data-preset="hard" type="button">Hard<small>20 × 16 · 65</small></button><button data-preset="expert" type="button">Expert<small>30 × 16 · 99</small></button></div><details><summary>Custom board</summary><div class="custom-grid"><label>Width<input id="board-width" type="number" min="4" max="30" value="${settings.width}" /></label><label>Height<input id="board-height" type="number" min="4" max="24" value="${settings.height}" /></label><label>Mines<input id="board-mines" type="number" min="1" value="${settings.mines}" /></label><label>Cell scale<input id="board-scale" type="range" min="24" max="56" value="${settings.cellSize}" /><output id="board-scale-value">${settings.cellSize}px</output></label></div><button id="apply-settings" class="button full" type="button">Apply custom board</button></details></section><section class="panel telemetry-panel"><div class="panel-title"><span>Board telemetry</span><small>Live DOM</small></div><div class="metric-grid"><div><small>Opened</small><strong id="opened-count">0</strong></div><div><small>Flags</small><strong id="flagged-count">0</strong></div><div><small>Grid</small><strong id="dimension-count">—</strong></div></div></section><section class="panel decision-panel"><div class="panel-title"><span>Jev decision</span><small id="decision-state">Waiting</small></div><div class="decision-metrics"><div><small>Confidence</small><strong id="decision-confidence">—</strong></div><div><small>Latency</small><strong id="decision-latency">—</strong></div></div><div id="decision-options" class="decision-options"><p class="empty-state">Start Jev to see its proof-gated candidate distribution.</p></div><p id="decision-proof" class="decision-proof">The solver must first prove candidate actions before Jev receives a choice.</p></section><section class="panel safety-panel"><div class="panel-title"><span>Safety model</span><small>Verified</small></div><p>Jev ranks a closed set of solver-proven actions. It cannot select a hidden, unopened, or unproven move.</p></section></aside></main></section>`;
+  root.innerHTML = `<section class="app-shell"><header class="topbar"><a class="brand" href="/" aria-label="Jev Minesweeper home"><span class="brand-mark">J</span><span><b>JEV</b> MINESWEEPER<small>SAFE PLAY LAB</small></span></a><div class="topbar-status" aria-live="polite"><span class="status-dot"></span><span id="game-status">READY</span></div><div class="topbar-actions"><button id="fullscreen-game" class="button icon-button" type="button" aria-label="Enter fullscreen">Fullscreen</button><button id="restart-game" class="button ghost" type="button">New board</button><button id="start-agent" class="button primary" type="button">Start Jev</button></div></header><main class="workspace"><section class="game-column"><div class="game-card"><div class="card-head"><div><span class="kicker">LOCAL MINESWEEPER</span><h1>Clear every safe square.</h1><p>Jev acts only on moves proven by the solver.</p></div><div class="run-stack"><span id="run-id" class="run-badge">RUN 1</span><span class="run-note">No guessing</span></div></div><div class="board-toolbar"><span><i></i> Left click to open</span><span><i></i> Right click to flag</span><span class="board-grid-label" id="dimension-count">—</span></div><div id="board-stage" tabindex="0"></div><footer class="board-footer"><span id="last-event" aria-live="polite">New random board ready.</span><span>Use Fullscreen for a dedicated board view.</span></footer></div></section><aside class="inspector"><section class="panel setup-panel"><div class="panel-title"><span>Board setup</span><small>new random seed</small></div><div class="difficulty-grid"><button data-preset="easy" type="button"><b>Easy</b><small>9 × 9 · 10 mines</small></button><button data-preset="medium" type="button"><b>Medium</b><small>12 × 12 · 25 mines</small></button><button data-preset="intermediate" type="button"><b>Intermediate</b><small>16 × 16 · 40 mines</small></button><button data-preset="hard" type="button"><b>Hard</b><small>20 × 16 · 65 mines</small></button><button data-preset="expert" class="expert-preset" type="button"><b>Expert</b><small>30 × 16 · 99 mines</small></button></div><details><summary>Custom board</summary><div class="custom-grid"><label>Width<input id="board-width" type="number" min="4" max="30" value="${settings.width}" /></label><label>Height<input id="board-height" type="number" min="4" max="24" value="${settings.height}" /></label><label>Mines<input id="board-mines" type="number" min="1" value="${settings.mines}" /></label><label>Cell scale<input id="board-scale" type="range" min="20" max="56" value="${settings.cellSize}" /><output id="board-scale-value">${settings.cellSize}px</output></label></div><button id="apply-settings" class="button full" type="button">Create custom board</button></details></section><section class="panel telemetry-panel"><div class="panel-title"><span>Board status</span><small>visible state</small></div><div class="metric-grid"><div><small>Opened</small><strong id="opened-count">0</strong></div><div><small>Flags</small><strong id="flagged-count">0</strong></div><div><small>Grid</small><strong id="dimension-count-side">—</strong></div></div></section><section class="panel decision-panel"><div class="panel-title"><span>Jev thinking</span><small id="decision-state">Waiting for board</small></div><div class="decision-metrics"><div><small>Safe actions</small><strong id="decision-moves">0</strong></div><div><small>Proofs checked</small><strong id="decision-verified">0</strong></div><div><small>Options seen</small><strong id="decision-candidate-count">0</strong></div><div><small>Average latency</small><strong id="decision-average-latency">—</strong></div></div><div class="current-decision"><span>Current decision</span><strong id="decision-confidence">—</strong><small id="decision-latency">No request yet</small></div><div id="decision-options" class="decision-options"><p class="empty-state">Start Jev to see the solver-proofed actions it can choose from.</p></div><p id="decision-proof" class="decision-proof">Every candidate is validated before Jev can rank it.</p></section><section class="panel safety-panel"><div class="panel-title"><span>Safety boundary</span><small>enforced</small></div><p>When deterministic inference cannot prove a move, Jev stops. Make a manual move or begin a new board—no hidden guess is taken.</p></section></aside></main></section>`;
   const board = root.querySelector<HTMLElement>('#board-stage');
   const status = root.querySelector<HTMLElement>('#game-status');
   const opened = root.querySelector<HTMLElement>('#opened-count');
@@ -33,13 +33,14 @@ function dashboard(root: HTMLElement, settings: BoardSettings): Dashboard {
   const dimensions = root.querySelector<HTMLElement>('#dimension-count');
   const event = root.querySelector<HTMLElement>('#last-event');
   const run = root.querySelector<HTMLElement>('#run-id');
+  const fullscreen = root.querySelector<HTMLButtonElement>('#fullscreen-game');
   const width = root.querySelector<HTMLInputElement>('#board-width');
   const height = root.querySelector<HTMLInputElement>('#board-height');
   const mines = root.querySelector<HTMLInputElement>('#board-mines');
   const scale = root.querySelector<HTMLInputElement>('#board-scale');
   const scaleValue = root.querySelector<HTMLOutputElement>('#board-scale-value');
-  if (!board || !status || !opened || !flagged || !dimensions || !event || !run || !width || !height || !mines || !scale || !scaleValue) throw new Error('dashboard initialization failed');
-  return { board, status, opened, flagged, dimensions, event, run, width, height, mines, scale, scaleValue };
+  if (!board || !status || !opened || !flagged || !dimensions || !event || !run || !fullscreen || !width || !height || !mines || !scale || !scaleValue) throw new Error('dashboard initialization failed');
+  return { board, status, opened, flagged, dimensions, event, run, fullscreen, width, height, mines, scale, scaleValue };
 }
 
 function settingsFromInputs(view: Dashboard): BoardSettings {
@@ -57,6 +58,7 @@ export function bindLocalBoard(root: HTMLElement, initialGame: LocalGame, initia
   let game = initialGame;
   let settings = initialSettings;
   let run = 1;
+  let revision = 0;
   const view = dashboard(root, settings);
   const render = () => {
     const board = toVisibleBoard(game);
@@ -64,11 +66,14 @@ export function bindLocalBoard(root: HTMLElement, initialGame: LocalGame, initia
     renderBoard(view.board, board, game.status);
     view.board.querySelector<HTMLElement>('#CellsBlock')!.dataset.seed = String(game.seed);
     view.status.textContent = game.status.toUpperCase();
+    view.status.dataset.state = game.status;
     view.opened.textContent = String(board.cells.filter((cell) => cell.state === 'open').length);
     view.flagged.textContent = String(board.cells.filter((cell) => cell.state === 'flag').length);
     view.dimensions.textContent = `${board.width} × ${board.height}`;
+    root.querySelector<HTMLElement>('#dimension-count-side')!.textContent = `${board.width} × ${board.height}`;
     view.run.textContent = `RUN ${run}`;
     root.dataset.run = String(run);
+    root.dataset.boardRevision = String(++revision);
   };
   const createNewBoard = (nextSettings: BoardSettings, message: string) => {
     settings = nextSettings;
@@ -85,8 +90,8 @@ export function bindLocalBoard(root: HTMLElement, initialGame: LocalGame, initia
   root.addEventListener('click', (event) => {
     if (!(event.target instanceof HTMLElement)) return;
     if (event.target.id === 'fullscreen-game') {
-      if (document.fullscreenElement) void document.exitFullscreen();
-      else void root.querySelector<HTMLElement>('.app-shell')?.requestFullscreen();
+      const fullscreen = document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+      void fullscreen.catch(() => { view.event.textContent = 'Fullscreen is unavailable in this browser context.'; });
       return;
     }
     if (event.target.id === 'start-agent') {
@@ -127,6 +132,11 @@ export function bindLocalBoard(root: HTMLElement, initialGame: LocalGame, initia
     game = action === 'opened' ? openCell(game, x, y) : toggleFlag(game, x, y);
     view.event.textContent = `Human ${action} cell ${x},${y}. Board status: ${game.status}.`;
     render();
+  });
+  document.addEventListener('fullscreenchange', () => {
+    const active = document.fullscreenElement !== null;
+    view.fullscreen.textContent = active ? 'Exit fullscreen' : 'Fullscreen';
+    view.fullscreen.setAttribute('aria-label', active ? 'Exit fullscreen' : 'Enter fullscreen');
   });
   render();
 }

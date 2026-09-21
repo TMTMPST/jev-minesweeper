@@ -8,13 +8,21 @@ npx playwright install chromium
 npm run dev
 ```
 
-`npm run dev` starts the local browser demo and the Jev controller together. The new board is fully closed. Choose a difficulty or custom board, then click **Start Jev** to initialize its local safe opening and start the controller. When it stops, **New board** creates another fully closed random board.
+`npm run dev` starts the local browser demo and controller together. It uses `PLAYWRIGHT_BROWSER=chromium` unless configured for the Playwright `firefox` or `webkit` engine. The new board is fully closed. Choose a difficulty or custom board, then click **Start Jev** to initialize its local safe opening and start the controller. When safe inference cannot continue, make a manual move or create a new board; the controller resumes after the rendered board revision changes.
 
 For UI-only development without a controller:
 
 ```bash
 npm run dev:ui
 ```
+
+For a personal browser such as Zen, use the browser-independent UI-only flow and open the local URL yourself:
+
+```bash
+npm run dev:ui
+```
+
+Zen is not a Playwright controller engine; use Chromium, Firefox, or WebKit for automated controller sessions.
 
 For another device on the same network:
 
