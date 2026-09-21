@@ -74,6 +74,74 @@ export function inferCandidates(board: VisibleBoard): readonly Candidate[] {
   return [...candidates.values()];
 }
 
+export function inferGuessCandidates(board: VisibleBoard): readonly Candidate[] {
+  validate(board);
+  const byCoordinate = new Map(board.cells.map((cell) => [key(cell), cell]));
+  const constraints: Constraint[] = [];
+  for (const source of board.cells) {
+    if (source.state !== 'open' || source.number === null) continue;
+    const adjacent = neighbors(byCoordinate, source);
+    const flags = adjacent.filter((cell) => cell.state === 'flag').length;
+    const unknown = adjacent.filter((cell) => cell.state === 'closed');
+    const remainingMines = source.number - flags;
+    if (remainingMines < 0 || remainingMines > unknown.length) throw new Error('invalid visible board');
+    if (unknown.length > 0) constraints.push({ source, unknown, remainingMines });
+  }
+  const explored = new Set<Constraint>();
+  const risks = new Map<string, { cell: VisibleCell; mineRisk: number; assignments: number }>();
+  for (const root of constraints) {
+    if (explored.has(root)) continue;
+    const component: Constraint[] = [];
+    const variables = new Map<string, VisibleCell>();
+    const pending = [root];
+    explored.add(root);
+    while (pending.length > 0) {
+      const current = pending.pop()!;
+      component.push(current);
+      for (const cell of current.unknown) variables.set(key(cell), cell);
+      for (const candidate of constraints) {
+        if (explored.has(candidate) || !candidate.unknown.some((cell) => variables.has(key(cell)))) continue;
+        explored.add(candidate);
+        pending.push(candidate);
+      }
+    }
+    const cells = [...variables.values()];
+    if (cells.length > 18) continue;
+    const indexByCell = new Map(cells.map((cell, index) => [key(cell), index]));
+    const mineCounts = new Array<number>(cells.length).fill(0);
+    let assignments = 0;
+    for (let assignment = 0; assignment < 2 ** cells.length; assignment += 1) {
+      let valid = true;
+      for (const constraint of component) {
+        let mines = 0;
+        for (const cell of constraint.unknown) {
+          const index = indexByCell.get(key(cell));
+          if (index === undefined) throw new Error('invalid visible board');
+          if ((assignment & (1 << index)) !== 0) mines += 1;
+        }
+        if (mines !== constraint.remainingMines) { valid = false; break; }
+      }
+      if (!valid) continue;
+      assignments += 1;
+      for (let index = 0; index < cells.length; index += 1) if ((assignment & (1 << index)) !== 0) mineCounts[index]! += 1;
+    }
+    if (assignments === 0) throw new Error('invalid visible board');
+    for (let index = 0; index < cells.length; index += 1) {
+      const cell = cells[index]!;
+      risks.set(key(cell), { cell, mineRisk: mineCounts[index]! / assignments, assignments });
+    }
+  }
+  const lowestRisk = Math.min(...[...risks.values()].map((risk) => risk.mineRisk).filter((risk) => risk > 0 && risk < 1));
+  if (!Number.isFinite(lowestRisk)) return [];
+  return [...risks.values()]
+    .filter((risk) => Math.abs(risk.mineRisk - lowestRisk) < 1e-12)
+    .map((risk) => ({
+      action: { kind: 'OPEN', x: risk.cell.x, y: risk.cell.y },
+      mineRisk: risk.mineRisk,
+      proof: `calculated guess: ${(risk.mineRisk * 100).toFixed(1)}% mine risk across ${risk.assignments} constraint-consistent assignments`,
+    }));
+}
+
 export function boardFinished(board: VisibleBoard): boolean {
   return board.cells.every((cell) => cell.state !== 'closed');
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { makeBoard, type VisibleCell } from '../../src/domain/types';
-import { inferCandidates } from '../../src/domain/solver';
+import { inferCandidates, inferGuessCandidates } from '../../src/domain/solver';
 
 const boardFromRows = (rows: string[][]) => makeBoard(rows[0]!.length, rows.length, rows.flatMap((row, y) => row.map((value, x): VisibleCell => value === '?' ? { x, y, state: 'closed', number: null } : value === 'F' ? { x, y, state: 'flag', number: null } : { x, y, state: 'open', number: Number(value) })));
 
@@ -20,5 +20,13 @@ describe('constraint solver', () => {
     expect(candidates).toContainEqual(expect.objectContaining({ action: { kind: 'FLAG', x: 3, y: 0 } }));
     expect(candidates).toContainEqual(expect.objectContaining({ action: { kind: 'FLAG', x: 3, y:1 } }));
     expect(candidates).toContainEqual(expect.objectContaining({ action: { kind: 'FLAG', x: 3, y: 2 } }));
+  });
+  it('offers every equal-risk cell in an ambiguous frontier only when guess inference is requested', () => {
+    const board = boardFromRows([['?', '1', '?']]);
+    expect(inferCandidates(board)).toEqual([]);
+    expect(inferGuessCandidates(board)).toEqual([
+      expect.objectContaining({ action: { kind: 'OPEN', x: 0, y: 0 }, mineRisk: 0.5 }),
+      expect.objectContaining({ action: { kind: 'OPEN', x: 2, y: 0 }, mineRisk: 0.5 }),
+    ]);
   });
 });

@@ -12,7 +12,7 @@ export class HttpJevDecisionClient implements DecisionClient {
     const criteria = Object.fromEntries(candidates.map((candidate) => [encodeOption(candidate), candidate.proof]));
     let response: Response;
     try {
-      response = await fetch(this.url!, { method: 'POST', signal: AbortSignal.timeout(10_000), headers: { Authorization: `Bearer ${this.key!}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ state: normaliseBoard(board), model: 'jev-latest', questions: { next_move: { type: 'choice', instructions: 'Select exactly one candidate move. Every listed move is already proven safe or proven mine by deterministic constraint inference.', criteria } } }) });
+      response = await fetch(this.url!, { method: 'POST', signal: AbortSignal.timeout(10_000), headers: { Authorization: `Bearer ${this.key!}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ state: normaliseBoard(board), model: 'jev-latest', questions: { next_move: { type: 'choice', instructions: 'Select exactly one candidate move. Solver-proven actions are safe or proven mines. A candidate explicitly marked calculated guess is unproven and carries its computed mine risk; select one only because guess mode was explicitly enabled.', criteria } } }) });
     } catch {
       throw new Error('Jev request failed');
     }

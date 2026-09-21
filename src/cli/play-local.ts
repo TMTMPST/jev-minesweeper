@@ -42,7 +42,7 @@ export async function main(): Promise<void> {
           const option = `${offered.action.kind}:${offered.action.x}:${offered.action.y}`;
           return { action: `${offered.action.kind} (${offered.action.x},${offered.action.y})`, probability: probabilityByOption[option] ?? (offered.action.kind === result.action.kind && offered.action.x === result.action.x && offered.action.y === result.action.y ? 1 : 0) };
         }).sort((left, right) => right.probability - left.probability);
-        telemetry.publish({ kind: 'decision', action: `${result.action.kind} ${result.action.x},${result.action.y}`, ...(candidate ? { proof: candidate.proof } : {}), confidence: result.confidence * 100, verified: candidate !== undefined, source: result.source, ...(result.latencyMs === undefined ? {} : { latencyMs: result.latencyMs }), candidates });
+        telemetry.publish({ kind: 'decision', action: `${result.action.kind} ${result.action.x},${result.action.y}`, ...(candidate ? { proof: candidate.proof, guess: candidate.mineRisk !== undefined, ...(candidate.mineRisk === undefined ? {} : { mineRisk: candidate.mineRisk }) } : {}), confidence: result.confidence * 100, verified: candidate?.mineRisk === undefined, source: result.source, ...(result.latencyMs === undefined ? {} : { latencyMs: result.latencyMs }), candidates });
         continue;
       }
       telemetry.publish({ kind: 'stop', reason: result.action.reason });

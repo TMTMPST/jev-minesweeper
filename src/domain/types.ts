@@ -17,7 +17,7 @@ export type VisibleCell = Readonly<{ x: number; y: number; state: CellState; num
 export type VisibleBoard = Readonly<{ width: number; height: number; cells: readonly VisibleCell[] }>;
 export type GamePhase = 'ready' | 'playing' | 'won' | 'lost';
 export type BoardSnapshot = Readonly<{ board: VisibleBoard; phase: GamePhase }>;
-export type Candidate = Readonly<{ action: Exclude<MoveAction, { kind: 'STOP' }>; proof: string }>;
+export type Candidate = Readonly<{ action: Exclude<MoveAction, { kind: 'STOP' }>; proof: string; mineRisk?: number }>;
 export type DecisionProbability = Readonly<{ option: string; probability: number }>;
 export type DecisionResult = Readonly<{ action: MoveAction; confidence: number; source: 'mock' | 'jev'; probabilities?: readonly DecisionProbability[]; latencyMs?: number }>;
 

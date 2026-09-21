@@ -185,6 +185,10 @@ details { border-top: 1px solid #29445d; } summary { padding: .68rem .8rem; colo
 .custom-grid label { display: grid; gap: .3rem; color: #8ca5b9; font-size: .58rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .custom-grid label:last-child { grid-column: span 2; grid-template-columns: 1fr auto; align-items: center; }
 input { min-width: 0; border: 1px solid #3a5974; border-radius: .42rem; padding: .45rem; color: #e2eff8; background: #0a1726; } input[type="range"] { padding: 0; accent-color: #66e3ff; } output { color: #66e3ff; font-size: .65rem; }
+.guess-mode { display: grid; grid-template-columns: auto 1fr; gap: .65rem; align-items: center; margin: .6rem; padding: .65rem; border: 1px solid #6b5031; border-radius: .5rem; color: #f0d5a6; background: #2b2118; cursor: pointer; }
+.guess-mode input { width: 1rem; height: 1rem; margin: 0; padding: 0; accent-color: #f3be60; }
+.guess-mode span { display: grid; gap: .15rem; }.guess-mode b { font-size: .68rem; }.guess-mode small { color: #c8aa78; font-size: .59rem; line-height: 1.35; }
+.guess-mode:has(input:checked) { border-color: #f3be60; background: #362714; }
 
 .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); padding: .75rem; }.metric-grid div { display: grid; gap: .3rem; }.metric-grid div + div { border-left: 1px solid #29445d; padding-left: .65rem; }.metric-grid strong { color: #f5fbff; font-size: .9rem; }
 .decision-metrics { display: grid; grid-template-columns: 1fr 1fr; }.decision-metrics div { display: grid; gap: .28rem; min-height: 3.55rem; padding: .66rem .75rem; }.decision-metrics div:nth-child(even) { border-left: 1px solid #29445d; }.decision-metrics div:nth-child(n + 3) { border-top: 1px solid #29445d; }.decision-metrics strong { color: #ecf8ff; font-size: .9rem; }

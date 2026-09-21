@@ -2,7 +2,7 @@ import { createGame } from '../domain/engine';
 import { bindLocalBoard, type BoardSettings } from './board-view';
 import './styles.css';
 
-type ControllerEvent = Readonly<{ id: number; kind: 'decision' | 'stop'; action?: string; proof?: string; confidence?: number; verified?: boolean; source?: string; reason?: string; latencyMs?: number; candidates?: readonly Readonly<{ action: string; probability: number }>[] }>;
+type ControllerEvent = Readonly<{ id: number; kind: 'decision' | 'stop'; action?: string; proof?: string; confidence?: number; verified?: boolean; guess?: boolean; mineRisk?: number; source?: string; reason?: string; latencyMs?: number; candidates?: readonly Readonly<{ action: string; probability: number }>[] }>;
 
 const params = new URLSearchParams(window.location.search);
 const integer = (name: string, fallback: number) => {
@@ -39,7 +39,7 @@ if (telemetryUrl) window.setInterval(async () => {
     if (updates.length === 0) return;
     lastEventId = updates.at(-1)!.id;
     for (const event of updates) if (event.kind === 'decision') {
-      safeActions += 1;
+      if (!event.guess) safeActions += 1;
       if (event.verified) verifiedProofs += 1;
       optionsSeen += event.candidates?.length ?? 0;
       if (event.latencyMs !== undefined) { totalLatencyMs += event.latencyMs; measuredActions += 1; }
@@ -71,8 +71,8 @@ if (telemetryUrl) window.setInterval(async () => {
       proof.textContent = 'No unproven action was taken.';
       return;
     }
-    state.textContent = event.source === 'jev' ? 'Jev ranked a proven move' : 'Solver chose a proven move';
-    confidence.textContent = `${(event.confidence ?? 0).toFixed(0)}%`;
+    state.textContent = event.guess ? 'Calculated guess enabled' : event.source === 'jev' ? 'Jev ranked a proven move' : 'Solver chose a proven move';
+    confidence.textContent = event.guess ? `${((event.mineRisk ?? 0) * 100).toFixed(1)}% mine risk` : `${(event.confidence ?? 0).toFixed(0)}%`;
     latency.textContent = event.latencyMs === undefined ? 'Mock decision' : `${event.latencyMs} ms`;
     options.replaceChildren();
     for (const candidate of event.candidates ?? []) {
@@ -89,7 +89,7 @@ if (telemetryUrl) window.setInterval(async () => {
       row.append(label, track, percentage);
       options.append(row);
     }
-    proof.textContent = `${event.action} · ${event.verified ? 'solver proof verified' : 'verification unavailable'}${event.proof ? ` — ${event.proof}` : ''}`;
+    proof.textContent = event.guess ? `${event.action} · calculated guess accepted · ${(event.mineRisk ?? 0) * 100}% mine risk — ${event.proof ?? 'constraint estimate unavailable'}` : `${event.action} · ${event.verified ? 'solver proof verified' : 'verification unavailable'}${event.proof ? ` — ${event.proof}` : ''}`;
   } catch {
     // Telemetry is optional; the local board remains usable if the controller is offline.
   }

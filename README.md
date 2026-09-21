@@ -97,6 +97,14 @@ The controller fails closed with one of these results:
 
 No unproven move is sent after a parse, response, route, or acknowledgement failure.
 
+## Calculated guess mode
+
+The local demo defaults to **Calculated guesses** off. With it off, Jev stops at `NO_PROVEN_MOVE` instead of selecting an unproven cell.
+
+Enable **Calculated guesses** in **Board setup** only when you accept that a game can be lost. When deterministic proof runs out, Jev enumerates bounded constraint-consistent frontier assignments, offers only the tied cells with the lowest computed mine risk, and makes one open action. The decision panel labels that action as a calculated guess and shows its mine risk.
+
+This mode applies only to the local demo. The guarded live compatibility command never makes guesses.
+
 ## Live compatibility limits
 
 The live command is intentionally restrictive:

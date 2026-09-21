@@ -59,3 +59,13 @@ test('fills the available desktop viewport instead of leaving a blank side gutte
   const metrics = await page.locator('.app-shell').evaluate((element) => ({ shellWidth: element.getBoundingClientRect().width, viewportWidth: window.innerWidth }));
   expect(metrics.shellWidth).toBeGreaterThan(metrics.viewportWidth - 60);
 });
+
+test('keeps calculated guesses opt-in and records the setting as a board revision', async ({ page }) => {
+  await page.goto('/');
+  const revision = await page.locator('#app').getAttribute('data-board-revision');
+  await expect(page.locator('#guess-mode')).not.toBeChecked();
+  await expect(page.locator('#app')).toHaveAttribute('data-guess-mode', 'disabled');
+  await page.locator('#guess-mode').check();
+  await expect(page.locator('#app')).toHaveAttribute('data-guess-mode', 'enabled');
+  await expect(page.locator('#app')).not.toHaveAttribute('data-board-revision', revision ?? '');
+});

@@ -15,6 +15,10 @@ export class LocalDemoAdapter {
     return readVisibleBoard(this.page);
   }
 
+  async guessingEnabled(): Promise<boolean> {
+    return (await this.page.locator('#app').getAttribute('data-guess-mode')) === 'enabled';
+  }
+
   async perform(action: Exclude<MoveAction, { kind: 'STOP' }>): Promise<void> {
     const current = await this.read();
     if (action.x < 0 || action.x >= current.board.width || action.y < 0 || action.y >= current.board.height) throw new Error('illegal action');

@@ -1,12 +1,13 @@
 import type { BoardSnapshot, Candidate, DecisionResult, MoveAction, StopReason } from '../domain/types';
 import type { DecisionClient } from '../decision/decision-client';
-import { inferCandidates } from '../domain/solver';
+import { inferCandidates, inferGuessCandidates } from '../domain/solver';
 import { assertAction, assertDecisionIsCandidate } from './safety-gate';
 
 export interface BoardAdapter {
   read(): Promise<BoardSnapshot>;
   perform(action: Exclude<MoveAction, { kind: 'STOP' }>): Promise<void>;
   waitForBoardChange(before: BoardSnapshot, timeoutMs: number): Promise<BoardSnapshot | null>;
+  guessingEnabled?(): Promise<boolean>;
 }
 
 function stop(reason: StopReason): DecisionResult {
@@ -37,8 +38,13 @@ export class GameController {
     if (before.phase !== 'playing') return stop('GAME_FINISHED');
     this.selectedCandidate = undefined;
     this.offeredCandidates = [];
-    let candidates;
+    let candidates: readonly Candidate[];
     try { candidates = inferCandidates(before.board); } catch { return stop('INVALID_BOARD'); }
+    if (candidates.length === 0) {
+      try {
+        if (await this.adapter.guessingEnabled?.()) candidates = inferGuessCandidates(before.board);
+      } catch { return stop('INVALID_BOARD'); }
+    }
     this.offeredCandidates = candidates;
     if (candidates.length === 0) return stop('NO_PROVEN_MOVE');
     let decision: DecisionResult;
