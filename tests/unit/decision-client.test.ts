@@ -17,5 +17,5 @@ describe('decision clients', () => {
     if (!init || typeof init !== 'object' || !('body' in init)) throw new Error('missing request body');
     expect(JSON.parse(String(init.body))).toMatchObject({ model: 'jev-latest', questions: { next_move: { type: 'choice', criteria: { 'OPEN:0:0': 'test' } } } });
   });
-  it('accepts the standard answers envelope', async () => { vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ answers: { next_move: { choice: 'OPEN:0:0', confidence: 0.9 } } }), { status: 200 }))); await expect(new HttpJevDecisionClient('https://jev.test', 'key').choose(board, candidates)).resolves.toMatchObject({ source: 'jev', action: { kind: 'OPEN' } }); });
+  it('returns the standard answers envelope probability distribution', async () => { vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ answers: { next_move: { choice: 'OPEN:0:0', confidence: 0.9, probabilities: { 'OPEN:0:0': 0.9 } } } }), { status: 200 }))); await expect(new HttpJevDecisionClient('https://jev.test', 'key').choose(board, candidates)).resolves.toMatchObject({ source: 'jev', action: { kind: 'OPEN' }, probabilities: [{ option: 'OPEN:0:0', probability: 0.9 }] }); });
 });

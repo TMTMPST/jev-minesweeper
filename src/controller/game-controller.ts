@@ -16,6 +16,7 @@ function stop(reason: StopReason): DecisionResult {
 export class GameController {
   private failureDetail: string | undefined;
   private selectedCandidate: Candidate | undefined;
+  private offeredCandidates: readonly Candidate[] = [];
 
   constructor(private readonly adapter: BoardAdapter, private readonly client: DecisionClient) {}
 
@@ -26,12 +27,19 @@ export class GameController {
   get lastSelectedCandidate(): Candidate | undefined {
     return this.selectedCandidate;
   }
+
+  get lastOfferedCandidates(): readonly Candidate[] {
+    return this.offeredCandidates;
+  }
   async step(): Promise<DecisionResult> {
     let before: BoardSnapshot;
     try { before = await this.adapter.read(); } catch { return stop('INVALID_BOARD'); }
     if (before.phase !== 'playing') return stop('GAME_FINISHED');
+    this.selectedCandidate = undefined;
+    this.offeredCandidates = [];
     let candidates;
     try { candidates = inferCandidates(before.board); } catch { return stop('INVALID_BOARD'); }
+    this.offeredCandidates = candidates;
     if (candidates.length === 0) return stop('NO_PROVEN_MOVE');
     let decision: DecisionResult;
     try {

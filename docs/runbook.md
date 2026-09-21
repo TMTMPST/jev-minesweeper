@@ -5,15 +5,15 @@
 ```bash
 npm install
 npx playwright install chromium
-npm run agent:local
+npm run dev
 ```
 
-`agent:local` starts the local browser demo and controller together. The board opens with a random safe local opening; no terminal input is needed. When the controller stops, use **RESTART BOARD** or **APPLY NEW RANDOM BOARD** in the browser. Board width, height, mine count, and cell size are configurable in the UI.
+`npm run dev` starts the local browser demo and the Jev controller together. The new board is fully closed. Choose a difficulty or custom board, then click **Start Jev** to initialize its local safe opening and start the controller. When it stops, **New board** creates another fully closed random board.
 
-For UI-only development:
+For UI-only development without a controller:
 
 ```bash
-npm run dev
+npm run dev:ui
 ```
 
 For another device on the same network:

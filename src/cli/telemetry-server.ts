@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
 
-export type ControllerTelemetry = Readonly<{ kind: 'decision' | 'stop'; action?: string; proof?: string; confidence?: number; verified?: boolean; source?: string; reason?: string }>;
+export type ControllerTelemetry = Readonly<{ kind: 'decision' | 'stop'; action?: string; proof?: string; confidence?: number; verified?: boolean; source?: string; reason?: string; latencyMs?: number; candidates?: readonly Readonly<{ action: string; probability: number }>[] }>;
 
 export async function startTelemetryServer(): Promise<{ url: string; publish: (event: ControllerTelemetry) => void; close: () => Promise<void> }> {
   const events: ControllerTelemetry[] = [];

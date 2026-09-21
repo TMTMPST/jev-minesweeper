@@ -3,6 +3,8 @@ import type { VisibleBoard } from '../domain/types';
 
 export type BoardSettings = Readonly<{ width: number; height: number; mines: number; cellSize: number }>;
 
+type Dashboard = Readonly<{ board: HTMLElement; status: HTMLElement; opened: HTMLElement; flagged: HTMLElement; dimensions: HTMLElement; event: HTMLElement; run: HTMLElement; width: HTMLInputElement; height: HTMLInputElement; mines: HTMLInputElement; scale: HTMLInputElement; scaleValue: HTMLOutputElement }>;
+
 export function renderBoard(root: HTMLElement, board: VisibleBoard, status: LocalGame['status']): void {
   const block = document.createElement('div');
   block.id = 'CellsBlock';
@@ -22,8 +24,8 @@ export function renderBoard(root: HTMLElement, board: VisibleBoard, status: Loca
   root.replaceChildren(block);
 }
 
-function dashboard(root: HTMLElement, settings: BoardSettings): { board: HTMLElement; status: HTMLElement; opened: HTMLElement; flagged: HTMLElement; dimensions: HTMLElement; event: HTMLElement; run: HTMLElement; width: HTMLInputElement; height: HTMLInputElement; mines: HTMLInputElement; scale: HTMLInputElement } {
-  root.innerHTML = `<section class="console-shell"><header class="console-header"><div><span class="eyebrow">LOCAL // SAFE MODE</span><h1>JEV MINESWEEPER</h1></div><div class="header-actions"><div class="connection"><i></i> CONTROLLER READY</div><button id="fullscreen-game" type="button">FULLSCREEN</button><button id="restart-game" type="button">RESTART BOARD</button></div></header><div class="console-grid"><section class="board-panel"><div class="panel-heading"><span>VISIBLE BOARD</span><span id="game-status">READY</span></div><div id="board-stage"></div><p class="board-hint">Every restart generates a new random local board. The controller reads only rendered cells and never guesses.</p></section><aside class="agent-panel"><section class="settings-card"><div class="panel-heading"><span>BOARD CONFIGURATION</span><span>LOCAL</span></div><div class="settings-grid"><label>Width <input id="board-width" type="number" min="4" max="30" value="${settings.width}" /></label><label>Height <input id="board-height" type="number" min="4" max="24" value="${settings.height}" /></label><label>Mines <input id="board-mines" type="number" min="1" value="${settings.mines}" /></label><label>Cell size <input id="board-scale" type="range" min="24" max="56" value="${settings.cellSize}" /><output id="board-scale-value">${settings.cellSize}px</output></label></div><button id="apply-settings" type="button">APPLY NEW RANDOM BOARD</button></section><section class="telemetry"><div class="panel-heading"><span>BOARD TELEMETRY</span><span>LIVE</span></div><dl><div><dt>Opened</dt><dd id="opened-count">0</dd></div><div><dt>Flags</dt><dd id="flagged-count">0</dd></div><div><dt>Dimensions</dt><dd id="dimension-count">—</dd></div></dl></section><section class="decision-card"><div class="panel-heading"><span>JEV DECISION</span><span id="decision-state">WAITING</span></div><div id="controller-log" class="controller-log"><p><b>Awaiting candidate proof.</b><span>Solver must produce safe candidates before Jev is queried.</span></p></div></section><section class="event-card"><div class="panel-heading"><span>LOCAL BOARD EVENT</span><span id="run-id">RUN 1</span></div><p id="last-event">Board initialized with a safe opening.</p></section><section class="safety-card"><strong>PROOF-GATED CONTROL</strong><p>Choice selects among proofs. Confidence is display-only; the solver and validator own safety.</p></section></aside></div></section>`;
+function dashboard(root: HTMLElement, settings: BoardSettings): Dashboard {
+  root.innerHTML = `<section class="app-shell"><header class="topbar"><a class="brand" href="/"><span>JEV</span> MINESWEEPER</a><div class="topbar-status"><span class="status-dot"></span><span id="game-status">READY</span></div><div class="topbar-actions"><button id="fullscreen-game" class="button ghost" type="button">Fullscreen</button><button id="restart-game" class="button ghost" type="button">New board</button><button id="start-agent" class="button primary" type="button">Start Jev</button></div></header><main class="workspace"><section class="game-column"><div class="game-card"><div class="card-head"><div><span class="kicker">LOCAL GAME</span><h1>Clear the field.</h1></div><span id="run-id" class="run-badge">RUN 1</span></div><div id="board-stage"></div><footer class="board-footer"><span>Left click to open · Right click to flag</span><span id="last-event">New random board ready.</span></footer></div></section><aside class="inspector"><section class="panel setup-panel"><div class="panel-title"><span>New game</span><small>Random every time</small></div><div class="difficulty-grid"><button data-preset="easy" type="button">Easy<small>9 × 9 · 10</small></button><button data-preset="medium" type="button">Medium<small>12 × 12 · 25</small></button><button data-preset="intermediate" type="button">Intermediate<small>16 × 16 · 40</small></button><button data-preset="hard" type="button">Hard<small>20 × 16 · 65</small></button><button data-preset="expert" type="button">Expert<small>30 × 16 · 99</small></button></div><details><summary>Custom board</summary><div class="custom-grid"><label>Width<input id="board-width" type="number" min="4" max="30" value="${settings.width}" /></label><label>Height<input id="board-height" type="number" min="4" max="24" value="${settings.height}" /></label><label>Mines<input id="board-mines" type="number" min="1" value="${settings.mines}" /></label><label>Cell scale<input id="board-scale" type="range" min="24" max="56" value="${settings.cellSize}" /><output id="board-scale-value">${settings.cellSize}px</output></label></div><button id="apply-settings" class="button full" type="button">Apply custom board</button></details></section><section class="panel telemetry-panel"><div class="panel-title"><span>Board telemetry</span><small>Live DOM</small></div><div class="metric-grid"><div><small>Opened</small><strong id="opened-count">0</strong></div><div><small>Flags</small><strong id="flagged-count">0</strong></div><div><small>Grid</small><strong id="dimension-count">—</strong></div></div></section><section class="panel decision-panel"><div class="panel-title"><span>Jev decision</span><small id="decision-state">Waiting</small></div><div class="decision-metrics"><div><small>Confidence</small><strong id="decision-confidence">—</strong></div><div><small>Latency</small><strong id="decision-latency">—</strong></div></div><div id="decision-options" class="decision-options"><p class="empty-state">Start Jev to see its proof-gated candidate distribution.</p></div><p id="decision-proof" class="decision-proof">The solver must first prove candidate actions before Jev receives a choice.</p></section><section class="panel safety-panel"><div class="panel-title"><span>Safety model</span><small>Verified</small></div><p>Jev ranks a closed set of solver-proven actions. It cannot select a hidden, unopened, or unproven move.</p></section></aside></main></section>`;
   const board = root.querySelector<HTMLElement>('#board-stage');
   const status = root.querySelector<HTMLElement>('#game-status');
   const opened = root.querySelector<HTMLElement>('#opened-count');
@@ -35,8 +37,20 @@ function dashboard(root: HTMLElement, settings: BoardSettings): { board: HTMLEle
   const height = root.querySelector<HTMLInputElement>('#board-height');
   const mines = root.querySelector<HTMLInputElement>('#board-mines');
   const scale = root.querySelector<HTMLInputElement>('#board-scale');
-  if (!board || !status || !opened || !flagged || !dimensions || !event || !run || !width || !height || !mines || !scale) throw new Error('dashboard initialization failed');
-  return { board, status, opened, flagged, dimensions, event, run, width, height, mines, scale };
+  const scaleValue = root.querySelector<HTMLOutputElement>('#board-scale-value');
+  if (!board || !status || !opened || !flagged || !dimensions || !event || !run || !width || !height || !mines || !scale || !scaleValue) throw new Error('dashboard initialization failed');
+  return { board, status, opened, flagged, dimensions, event, run, width, height, mines, scale, scaleValue };
+}
+
+function settingsFromInputs(view: Dashboard): BoardSettings {
+  const width = Math.min(30, Math.max(4, Number(view.width.value) || 12));
+  const height = Math.min(24, Math.max(4, Number(view.height.value) || 12));
+  const mines = Math.min(width * height - 1, Math.max(1, Number(view.mines.value) || 1));
+  const cellSize = Math.min(56, Math.max(24, Number(view.scale.value) || 40));
+  view.width.value = String(width);
+  view.height.value = String(height);
+  view.mines.value = String(mines);
+  return { width, height, mines, cellSize };
 }
 
 export function bindLocalBoard(root: HTMLElement, initialGame: LocalGame, initialSettings: BoardSettings, newGame: (settings: BoardSettings) => LocalGame): void {
@@ -44,13 +58,6 @@ export function bindLocalBoard(root: HTMLElement, initialGame: LocalGame, initia
   let settings = initialSettings;
   let run = 1;
   const view = dashboard(root, settings);
-  const startNewGame = (nextSettings: BoardSettings, message: string) => {
-    settings = nextSettings;
-    game = newGame(settings);
-    run += 1;
-    view.event.textContent = message;
-    render();
-  };
   const render = () => {
     const board = toVisibleBoard(game);
     root.style.setProperty('--board-cell-size', `${settings.cellSize}px`);
@@ -63,27 +70,52 @@ export function bindLocalBoard(root: HTMLElement, initialGame: LocalGame, initia
     view.run.textContent = `RUN ${run}`;
     root.dataset.run = String(run);
   };
+  const createNewBoard = (nextSettings: BoardSettings, message: string) => {
+    settings = nextSettings;
+    game = newGame(settings);
+    run += 1;
+    view.event.textContent = message;
+    render();
+  };
   root.addEventListener('contextmenu', (event) => event.preventDefault());
   root.addEventListener('input', (event) => {
     if (!(event.target instanceof HTMLInputElement) || event.target.id !== 'board-scale') return;
-    root.querySelector('#board-scale-value')!.textContent = `${event.target.value}px`;
+    view.scaleValue.textContent = `${event.target.value}px`;
   });
   root.addEventListener('click', (event) => {
     if (!(event.target instanceof HTMLElement)) return;
     if (event.target.id === 'fullscreen-game') {
       if (document.fullscreenElement) void document.exitFullscreen();
-      else void root.querySelector<HTMLElement>('.console-shell')?.requestFullscreen();
+      else void root.querySelector<HTMLElement>('.app-shell')?.requestFullscreen();
       return;
     }
-    if (event.target.id !== 'restart-game' && event.target.id !== 'apply-settings') return;
-    const width = Math.min(30, Math.max(4, Number(view.width.value) || 12));
-    const height = Math.min(24, Math.max(4, Number(view.height.value) || 12));
-    const mines = Math.min(width * height - 1, Math.max(1, Number(view.mines.value) || 1));
-    const cellSize = Math.min(56, Math.max(24, Number(view.scale.value) || 40));
-    view.width.value = String(width);
-    view.height.value = String(height);
-    view.mines.value = String(mines);
-    startNewGame({ width, height, mines, cellSize }, event.target.id === 'restart-game' ? 'New random local board initialized. Controller will resume when proven moves exist.' : 'Configuration applied to a new random local board.');
+    if (event.target.id === 'start-agent') {
+      if (game.status !== 'ready') return;
+      game = openCell(game, 0, 0);
+      run += 1;
+      view.event.textContent = 'Jev session started from the local safe opening.';
+      render();
+      return;
+    }
+    if (event.target.id === 'restart-game') {
+      createNewBoard(settingsFromInputs(view), 'New random board ready. Press Start Jev when ready.');
+      return;
+    }
+    if (event.target.id === 'apply-settings') {
+      createNewBoard(settingsFromInputs(view), 'Custom random board ready. Press Start Jev when ready.');
+      return;
+    }
+    const preset = event.target.dataset.preset;
+    const presets: Record<string, BoardSettings> = { easy: { width: 9, height: 9, mines: 10, cellSize: 40 }, medium: { width: 12, height: 12, mines: 25, cellSize: 40 }, intermediate: { width: 16, height: 16, mines: 40, cellSize: 34 }, hard: { width: 20, height: 16, mines: 65, cellSize: 30 }, expert: { width: 30, height: 16, mines: 99, cellSize: 24 } };
+    if (preset && presets[preset]) {
+      const selected = presets[preset];
+      view.width.value = String(selected.width);
+      view.height.value = String(selected.height);
+      view.mines.value = String(selected.mines);
+      view.scale.value = String(selected.cellSize);
+      view.scaleValue.textContent = `${selected.cellSize}px`;
+      createNewBoard(selected, `${preset[0]!.toUpperCase()}${preset.slice(1)} random board ready. Press Start Jev when ready.`);
+    }
   });
   root.addEventListener('mouseup', (event) => {
     if (!(event.target instanceof HTMLElement) || !event.target.classList.contains('cell')) return;

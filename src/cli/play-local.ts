@@ -29,7 +29,7 @@ export async function main(): Promise<void> {
   const page = await browser.newPage();
   try {
     await page.goto(pageUrl.href);
-    console.log('Local controller is running. Use RESTART BOARD in the browser after a stop condition.');
+    console.log('Local controller is running. Choose a board and click START JEV in the browser.');
     const controller = createLocalController(page);
     let run = await page.locator('#app').getAttribute('data-run');
     if (!run) throw new Error('local board did not expose a run identifier');
@@ -37,7 +37,12 @@ export async function main(): Promise<void> {
       const result = await controller.step();
       if (result.action.kind !== 'STOP') {
         const candidate = controller.lastSelectedCandidate;
-        telemetry.publish({ kind: 'decision', action: `${result.action.kind} ${result.action.x},${result.action.y}`, ...(candidate ? { proof: candidate.proof } : {}), confidence: result.confidence * 100, verified: candidate !== undefined, source: result.source });
+        const probabilityByOption = Object.fromEntries((result.probabilities ?? []).map((item) => [item.option, item.probability]));
+        const candidates = controller.lastOfferedCandidates.map((offered) => {
+          const option = `${offered.action.kind}:${offered.action.x}:${offered.action.y}`;
+          return { action: `${offered.action.kind} (${offered.action.x},${offered.action.y})`, probability: probabilityByOption[option] ?? (offered.action.kind === result.action.kind && offered.action.x === result.action.x && offered.action.y === result.action.y ? 1 : 0) };
+        }).sort((left, right) => right.probability - left.probability);
+        telemetry.publish({ kind: 'decision', action: `${result.action.kind} ${result.action.x},${result.action.y}`, ...(candidate ? { proof: candidate.proof } : {}), confidence: result.confidence * 100, verified: candidate !== undefined, source: result.source, ...(result.latencyMs === undefined ? {} : { latencyMs: result.latencyMs }), candidates });
         continue;
       }
       telemetry.publish({ kind: 'stop', reason: result.action.reason });

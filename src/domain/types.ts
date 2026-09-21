@@ -18,7 +18,8 @@ export type VisibleBoard = Readonly<{ width: number; height: number; cells: read
 export type GamePhase = 'ready' | 'playing' | 'won' | 'lost';
 export type BoardSnapshot = Readonly<{ board: VisibleBoard; phase: GamePhase }>;
 export type Candidate = Readonly<{ action: Exclude<MoveAction, { kind: 'STOP' }>; proof: string }>;
-export type DecisionResult = Readonly<{ action: MoveAction; confidence: number; source: 'mock' | 'jev' }>;
+export type DecisionProbability = Readonly<{ option: string; probability: number }>;
+export type DecisionResult = Readonly<{ action: MoveAction; confidence: number; source: 'mock' | 'jev'; probabilities?: readonly DecisionProbability[]; latencyMs?: number }>;
 
 export function makeBoard(width: number, height: number, cells: readonly VisibleCell[]): VisibleBoard {
   if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1 || cells.length !== width * height) {
