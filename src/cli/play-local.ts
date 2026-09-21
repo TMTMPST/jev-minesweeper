@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { chromium } from '@playwright/test';
 import { createServer, type ViteDevServer } from 'vite';
 import { createLocalController } from './local-controller';
+import { startTelemetryServer } from './telemetry-server';
 
 async function resolveDemo(): Promise<{ url: string; server: ViteDevServer | undefined }> {
   const configuredUrl = process.env.LOCAL_DEMO_URL ?? 'http://127.0.0.1:4173/';
@@ -15,41 +16,43 @@ async function resolveDemo(): Promise<{ url: string; server: ViteDevServer | und
   const server = await createServer();
   await server.listen();
   const url = server.resolvedUrls?.local[0];
-  if (!url) {
-    await server.close();
-    throw new Error('Vite did not expose a local demo URL');
-  }
+  if (!url) { await server.close(); throw new Error('Vite did not expose a local demo URL'); }
   return { url, server };
 }
 
 export async function main(): Promise<void> {
   const { url, server } = await resolveDemo();
+  const telemetry = await startTelemetryServer();
+  const pageUrl = new URL(url);
+  pageUrl.searchParams.set('telemetry', telemetry.url);
   const browser = await chromium.launch({ headless: false });
   const page = await browser.newPage();
   try {
-    await page.goto(url);
-    console.log('Open one local cell in the browser, then press Enter here to start the safe controller loop.');
-    await new Promise<void>((resolve) => process.stdin.once('data', resolve));
+    await page.goto(pageUrl.href);
+    console.log('Local controller is running. Use RESTART BOARD in the browser after a stop condition.');
     const controller = createLocalController(page);
-    let actions = 0;
+    let run = await page.locator('#run-id').textContent();
     for (;;) {
       const result = await controller.step();
-      if (result.action.kind === 'STOP') {
-        console.log(JSON.stringify(result.action));
-        if (result.action.reason === 'DECISION_FAILURE') console.error(`Decision failure: ${controller.lastFailureDetail ?? 'unknown decision error'}`);
-        break;
+      if (result.action.kind !== 'STOP') {
+        const candidate = controller.lastSelectedCandidate;
+        telemetry.publish({ kind: 'decision', action: `${result.action.kind} ${result.action.x},${result.action.y}`, ...(candidate ? { proof: candidate.proof } : {}), confidence: result.confidence * 100, verified: candidate !== undefined, source: result.source });
+        continue;
       }
-      actions += 1;
-      console.log(`Action ${actions}: ${JSON.stringify(result.action)}`);
-      await page.waitForTimeout(100);
+      telemetry.publish({ kind: 'stop', reason: result.action.reason });
+      console.log(JSON.stringify(result.action));
+      if (result.action.reason === 'DECISION_FAILURE') console.error(`Decision failure: ${controller.lastFailureDetail ?? 'unknown decision error'}`);
+      for (;;) {
+        await page.waitForTimeout(250);
+        const nextRun = await page.locator('#run-id').textContent();
+        if (nextRun !== run) { run = nextRun; break; }
+      }
     }
   } finally {
     await browser.close();
+    await telemetry.close();
     await server?.close();
   }
 }
 
-if (process.argv[1]?.endsWith('play-local.ts')) {
-  await main();
-  process.exit(0);
-}
+if (process.argv[1]?.endsWith('play-local.ts')) await main();

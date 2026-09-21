@@ -1,4 +1,4 @@
-import type { BoardSnapshot, DecisionResult, MoveAction, StopReason } from '../domain/types';
+import type { BoardSnapshot, Candidate, DecisionResult, MoveAction, StopReason } from '../domain/types';
 import type { DecisionClient } from '../decision/decision-client';
 import { inferCandidates } from '../domain/solver';
 import { assertAction, assertDecisionIsCandidate } from './safety-gate';
@@ -15,11 +15,16 @@ function stop(reason: StopReason): DecisionResult {
 
 export class GameController {
   private failureDetail: string | undefined;
+  private selectedCandidate: Candidate | undefined;
 
   constructor(private readonly adapter: BoardAdapter, private readonly client: DecisionClient) {}
 
   get lastFailureDetail(): string | undefined {
     return this.failureDetail;
+  }
+
+  get lastSelectedCandidate(): Candidate | undefined {
+    return this.selectedCandidate;
   }
   async step(): Promise<DecisionResult> {
     let before: BoardSnapshot;
@@ -33,6 +38,7 @@ export class GameController {
       decision = await this.client.choose(before.board, candidates);
       assertDecisionIsCandidate(decision, candidates);
       assertAction(before.board, decision.action);
+      this.selectedCandidate = candidates.find((candidate) => candidate.action.kind === decision.action.kind && candidate.action.x === decision.action.x && candidate.action.y === decision.action.y);
     } catch (error) {
       this.failureDetail = error instanceof Error ? error.message : 'unknown decision error';
       return stop('DECISION_FAILURE');

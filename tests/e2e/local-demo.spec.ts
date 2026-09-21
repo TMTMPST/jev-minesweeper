@@ -12,14 +12,17 @@ test.beforeEach(async ({ page }) => {
 test('controller makes only proven local moves through rendered DOM', async ({ page }) => {
   await page.goto('/?seed=17&width=6&height=6&mines=6');
   const controller = createLocalController(page, new MockDecisionClient());
-  await expect(controller.step()).resolves.toMatchObject({ action: { kind: 'STOP', reason: 'GAME_FINISHED' } });
-  await page.locator('#cell_0_0').click();
   await expect(controller.step()).resolves.toMatchObject({ action: { kind: expect.stringMatching(/OPEN|FLAG|STOP/) } });
 });
 
-test('accepts a board-wide zero flood reveal', async ({ page }) => {
+test('auto-initialization reveals a board-wide zero region', async ({ page }) => {
   await page.goto('/?seed=7&width=4&height=4&mines=2');
-  const before = await page.locator('.opened').count();
-  await page.locator('#cell_0_0').click();
-  expect(await page.locator('.opened').count()).toBeGreaterThan(before + 1);
+  expect(await page.locator('.opened').count()).toBeGreaterThan(1);
+});
+
+test('restart creates another auto-initialized local board', async ({ page }) => {
+  await page.goto('/?seed=7&width=6&height=6&mines=6');
+  await page.locator('#restart-game').click();
+  await expect(page.locator('#run-id')).toHaveText('RUN 2');
+  expect(await page.locator('.opened').count()).toBeGreaterThan(0);
 });
